@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.utils import shuffle
 
 
-def load_data(path, train_size=0.75):
+def load_data(path, n_classes, train_size=0.75):
     df = pd.read_csv(path)
 
     df.fillna(0)
@@ -14,10 +14,10 @@ def load_data(path, train_size=0.75):
     y_values = []
     for index, row in df.iterrows():
         serie_values = []
-        serie_class = 0
+        serie_class = np.zeros(n_classes)
         for columnName, columnData in row.iteritems():
             if columnName == "class":
-                serie_class = int(columnData)
+                serie_class[int(columnData)] = 1
             else:
                 serie_values.append(columnData)
         x_values.append(serie_values)

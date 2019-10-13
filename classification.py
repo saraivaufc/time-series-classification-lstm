@@ -1,5 +1,6 @@
 # https://machinelearningmastery.com/sequence-classification-lstm-recurrent-neural-networks-python-keras/
 # https://machinelearningmastery.com/how-to-develop-lstm-models-for-time-series-forecasting/
+import numpy as np
 import tensorflow as tf
 from osgeo import gdal
 from tensorflow.keras.callbacks import ModelCheckpoint
@@ -11,14 +12,16 @@ from utils import load_data
 
 
 class Classification():
-    def __init__(self, sequence_size, n_features, model_dir):
+    def __init__(self, n_classes, sequence_size, n_features, model_dir):
+        self.__n_classes = n_classes
         self.__sequence_size = sequence_size
         self.__n_features = n_features
         self.__model_dir = model_dir
 
         self.__checkpoint_path = "{dir}/model.ckpt".format(dir=model_dir)
 
-        self.__model = model_fn(sequence_size=self.__sequence_size,
+        self.__model = model_fn(n_classes=self.__n_classes,
+                                sequence_size=self.__sequence_size,
                                 n_features=self.__n_features)
 
         latest = tf.train.latest_checkpoint(self.__model_dir)
@@ -36,12 +39,16 @@ class Classification():
         self.__callbacks = [cp_callback, tensorboard_callback]
 
     def train(self, path, epochs=100, batch_size=255):
-        (X_train, y_train), (X_test, y_test) = load_data(path)
+        (X_train, y_train), (X_test, y_test) = load_data(
+            path=path,
+            n_classes=self.__n_classes
+        )
 
         X_train = sequence.pad_sequences(X_train,
                                          maxlen=self.__sequence_size)
 
-        X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], self.__n_features))
+        X_train = X_train.reshape(
+            (X_train.shape[0], X_train.shape[1], self.__n_features))
 
         self.__model.fit(X_train, y_train,
                          validation_split=0.25,
@@ -53,7 +60,8 @@ class Classification():
         X_test = sequence.pad_sequences(X_test,
                                         maxlen=self.__sequence_size)
 
-        X_test = X_test.reshape((X_test.shape[0], X_test.shape[1], self.__n_features))
+        X_test = X_test.reshape(
+            (X_test.shape[0], X_test.shape[1], self.__n_features))
 
         scores = self.__model.evaluate(X_test, y_test,
                                        verbose=0)
@@ -63,30 +71,26 @@ class Classification():
     def predict(self, image_path, predicted_path):
         dataSource = gdal.Open(image_path)
 
-        array = dataSource.ReadAsArray()
+        image = dataSource.ReadAsArray()
 
-        saved_shape = array.shape
+        flat_image = image.reshape(image.shape[0],
+                                   image.shape[1] * image.shape[2])
 
-        reshaped = array.reshape(saved_shape[0],
-                                 saved_shape[1] * saved_shape[2])
+        flat_image = flat_image.transpose()
 
-        reshaped = reshaped.transpose()
+        flat_image = sequence.pad_sequences(flat_image,
+                                            maxlen=self.__sequence_size)
 
-        print(reshaped.shape)
+        flat_image = flat_image.reshape((flat_image.shape[0],
+                                         flat_image.shape[1],
+                                         self.__n_features))
 
-        reshaped = sequence.pad_sequences(reshaped,
-                                          maxlen=self.__sequence_size)
+        flat_predicted = self.__model.predict(flat_image, batch_size=255)
 
-        reshaped = reshaped.reshape((reshaped.shape[0],
-                                     reshaped.shape[1],
-                                     self.__n_features))
+        flat_predicted = np.argmax(flat_predicted, axis=1)
 
-        predicted = self.__model.predict(reshaped, batch_size=255)
-        predicted[predicted > 0.5] = 1
-        predicted[predicted <= 0.5] = 0
-        predicted = predicted.astype(int)
-
-        predicted_image = predicted.reshape((saved_shape[1], saved_shape[2]))
+        predicted_image = flat_predicted.reshape((image.shape[1],
+                                                  image.shape[2]))
 
         # save results
         driver = dataSource.GetDriver()

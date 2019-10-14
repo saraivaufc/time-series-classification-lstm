@@ -1,5 +1,3 @@
-# https://machinelearningmastery.com/sequence-classification-lstm-recurrent-neural-networks-python-keras/
-# https://machinelearningmastery.com/how-to-develop-lstm-models-for-time-series-forecasting/
 import numpy as np
 import tensorflow as tf
 from osgeo import gdal
@@ -11,7 +9,7 @@ from model import model_fn
 from utils import load_data
 
 
-class Classification():
+class Classification(object):
     def __init__(self, n_classes, sequence_size, n_features, model_dir):
         self.__n_classes = n_classes
         self.__sequence_size = sequence_size

@@ -5,4 +5,6 @@ classification = Classification(n_classes=2,
                                 n_features=1,
                                 model_dir="data/logs")
 
-classification.train("data/allSamples.csv")
+classification.train("data/samples.csv",
+                     epochs=34,
+                     batch_size=255)

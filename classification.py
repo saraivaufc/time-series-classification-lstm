@@ -36,7 +36,7 @@ class Classification(object):
 
         self.__callbacks = [cp_callback, tensorboard_callback]
 
-    def train(self, path, epochs=100, batch_size=255):
+    def train(self, path, epochs=34, batch_size=255):
         (X_train, y_train), (X_test, y_test) = load_data(
             path=path,
             n_classes=self.__n_classes

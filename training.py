@@ -6,5 +6,5 @@ classification = Classification(n_classes=2,
                                 model_dir="data/logs")
 
 classification.train("data/samples.csv",
-                     epochs=34,
+                     epochs=100,
                      batch_size=255)

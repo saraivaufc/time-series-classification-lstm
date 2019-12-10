@@ -39,7 +39,8 @@ class Classification(object):
     def train(self, path, epochs=34, batch_size=255):
         (X_train, y_train), (X_test, y_test) = load_data(
             path=path,
-            n_classes=self.__n_classes
+            n_classes=self.__n_classes,
+            train_size=0.9
         )
 
         X_train = sequence.pad_sequences(X_train,
@@ -49,7 +50,7 @@ class Classification(object):
             (X_train.shape[0], X_train.shape[1], self.__n_features))
 
         self.__model.fit(X_train, y_train,
-                         validation_split=0.25,
+                         validation_split=0.10,
                          shuffle=True,
                          epochs=epochs,
                          batch_size=batch_size,
@@ -66,10 +67,10 @@ class Classification(object):
 
         print("Accuracy: %.2f%%" % (scores[1] * 100))
 
-    def predict(self, image_path, predicted_path):
-        dataSource = gdal.Open(image_path)
+    def predict(self, image_path, predicted_path, batch_size=255):
+        data_source = gdal.Open(image_path)
 
-        image = dataSource.ReadAsArray()
+        image = data_source.ReadAsArray()
 
         flat_image = image.reshape(image.shape[0],
                                    image.shape[1] * image.shape[2])
@@ -82,24 +83,31 @@ class Classification(object):
         flat_image = flat_image.reshape((flat_image.shape[0],
                                          flat_image.shape[1],
                                          self.__n_features))
+        for index, elem in enumerate(flat_image):
+            serie_values = np.array(elem)
+            max = np.max(serie_values)
+            min = np.min(serie_values)
 
-        flat_predicted = self.__model.predict(flat_image, batch_size=255)
+            flat_image[index] = (2 * (serie_values - min) / (max - min)) - 1
+
+        flat_predicted = self.__model.predict(flat_image, batch_size=batch_size)
 
         flat_predicted = np.argmax(flat_predicted, axis=1)
+        print(flat_predicted)
 
         predicted_image = flat_predicted.reshape((image.shape[1],
                                                   image.shape[2]))
 
         # save results
-        driver = dataSource.GetDriver()
+        driver = data_source.GetDriver()
         output_dataset = driver.Create(predicted_path,
                                        predicted_image.shape[1],
                                        predicted_image.shape[0],
                                        1,
                                        gdal.GDT_Byte,
                                        ['COMPRESS=DEFLATE'])
-        output_dataset.SetGeoTransform(dataSource.GetGeoTransform())
-        output_dataset.SetProjection(dataSource.GetProjection())
+        output_dataset.SetGeoTransform(data_source.GetGeoTransform())
+        output_dataset.SetProjection(data_source.GetProjection())
         output_dataset.GetRasterBand(1).WriteArray(predicted_image, 0, 0)
         output_dataset.FlushCache()
         print("Results saved!")

@@ -21,9 +21,9 @@ def load_data(path, n_classes, train_size=0.9):
                     serie_class[int(columnData)] = 1
                 else:
                     try:
-                        value = int(columnData)
+                        value = [int(columnData)]
                     except:
-                        value = 0
+                        value = [0]
                     serie_values.append(value)
 
         serie_values = np.array(serie_values)
@@ -33,6 +33,7 @@ def load_data(path, n_classes, train_size=0.9):
 
         serie_values = (2 * ((serie_values - serie_min)/(
                 serie_max-serie_min))) -1
+
 
         if len(serie_values) >= 1:
             x_values.append(serie_values)

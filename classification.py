@@ -43,11 +43,7 @@ class Classification(object):
             train_size=0.9
         )
 
-        X_train = sequence.pad_sequences(X_train,
-                                         maxlen=self.__sequence_size)
-
-        X_train = X_train.reshape(
-            (X_train.shape[0], X_train.shape[1], self.__n_features))
+        X_train = sequence.pad_sequences(X_train, maxlen=self.__sequence_size)
 
         self.__model.fit(X_train, y_train,
                          validation_split=0.10,
@@ -58,9 +54,6 @@ class Classification(object):
 
         X_test = sequence.pad_sequences(X_test,
                                         maxlen=self.__sequence_size)
-
-        X_test = X_test.reshape(
-            (X_test.shape[0], X_test.shape[1], self.__n_features))
 
         scores = self.__model.evaluate(X_test, y_test,
                                        verbose=0)
@@ -81,18 +74,22 @@ class Classification(object):
                                             maxlen=self.__sequence_size)
 
         flat_image = flat_image.reshape((flat_image.shape[0],
-                                         flat_image.shape[1],
-                                         self.__n_features))
+                                         flat_image.shape[1], self.__n_features))
+
+        flat_image = np.array(flat_image).astype(float)
+
         for index, elem in enumerate(flat_image):
             serie_values = np.array(elem)
-            max = np.max(serie_values)
-            min = np.min(serie_values)
 
-            flat_image[index] = (2 * (serie_values - min) / (max - min)) - 1
+            max = float(np.max(serie_values))
+            min = float(np.min(serie_values))
+
+            flat_image[index]= (2 * ((serie_values-min)/(max - min))) - 1
 
         flat_predicted = self.__model.predict(flat_image, batch_size=batch_size)
 
         flat_predicted = np.argmax(flat_predicted, axis=1)
+
         print(flat_predicted)
 
         predicted_image = flat_predicted.reshape((image.shape[1],

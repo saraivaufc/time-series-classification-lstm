@@ -39,16 +39,18 @@ def load_data(path, n_classes, train_size=0.9):
             x_values.append(serie_values)
             y_values.append(serie_class)
 
-        x_values.append(serie_values)
-        y_values.append(serie_class)
-
     x = int(len(x_values) * train_size)
     y = int(len(y_values) * train_size)
+
+    print(len(x_values))
 
     x_train = np.array(x_values[:x])
     y_train = np.array(y_values[:y])
 
     x_test = np.array(x_values[x:])
     y_test = np.array(y_values[y:])
+
+    print(len(x_train), len(x_test))
+    import sys; sys.exit(0)
 
     return (x_train, y_train), (x_test, y_test)

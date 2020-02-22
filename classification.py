@@ -43,7 +43,9 @@ class Classification(object):
             train_size=0.9
         )
 
-        X_train = sequence.pad_sequences(X_train, maxlen=self.__sequence_size)
+        X_train = sequence.pad_sequences(X_train,
+                                         maxlen=self.__sequence_size,
+                                         dtype='float32')
 
         self.__model.fit(X_train, y_train,
                          validation_split=0.10,
@@ -53,7 +55,10 @@ class Classification(object):
                          callbacks=self.__callbacks)
 
         X_test = sequence.pad_sequences(X_test,
-                                        maxlen=self.__sequence_size)
+                                        maxlen=self.__sequence_size,
+                                        dtype='float32')
+
+        y_test = y_test.reshape((y_test.shape[0]))
 
         scores = self.__model.evaluate(X_test, y_test,
                                        verbose=0)
@@ -71,7 +76,8 @@ class Classification(object):
         flat_image = flat_image.transpose()
 
         flat_image = sequence.pad_sequences(flat_image,
-                                            maxlen=self.__sequence_size)
+                                            maxlen=self.__sequence_size,
+                                            dtype='float32')
 
         flat_image = flat_image.reshape((flat_image.shape[0],
                                          flat_image.shape[1], self.__n_features))
@@ -89,8 +95,6 @@ class Classification(object):
         flat_predicted = self.__model.predict(flat_image, batch_size=batch_size)
 
         flat_predicted = np.argmax(flat_predicted, axis=1)
-
-        print(flat_predicted)
 
         predicted_image = flat_predicted.reshape((image.shape[1],
                                                   image.shape[2]))

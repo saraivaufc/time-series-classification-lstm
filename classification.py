@@ -6,7 +6,7 @@ from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.preprocessing import sequence
 
 from model import model_fn
-from utils import load_data
+from utils import load_data, remove_zeros
 
 
 class Classification(object):
@@ -75,26 +75,28 @@ class Classification(object):
 
         flat_image = flat_image.transpose()
 
+        flat_image = flat_image.reshape((flat_image.shape[0],
+                                         flat_image.shape[1],
+                                         self.__n_features))
+
+        flat_image = np.array(flat_image).astype(float)
+
+        for index, serie_values in enumerate(flat_image):
+            serie_values = remove_zeros(serie_values)
+            flat_image[index] = serie_values
+
         flat_image = sequence.pad_sequences(flat_image,
                                             maxlen=self.__sequence_size,
                                             dtype='float32')
 
-        flat_image = flat_image.reshape((flat_image.shape[0],
-                                         flat_image.shape[1], self.__n_features))
+        flat_predicted = self.__model.predict(flat_image,
+                                              batch_size=batch_size)
 
-        flat_image = np.array(flat_image).astype(float)
-
-        for index, elem in enumerate(flat_image):
-            serie_values = np.array(elem)
-
-            max = float(np.max(serie_values))
-            min = float(np.min(serie_values))
-
-            flat_image[index]= (2 * ((serie_values-min)/(max - min))) - 1
-
-        flat_predicted = self.__model.predict(flat_image, batch_size=batch_size)
+        print(flat_predicted[0])
 
         flat_predicted = np.argmax(flat_predicted, axis=1)
+
+        print(flat_predicted[0])
 
         predicted_image = flat_predicted.reshape((image.shape[1],
                                                   image.shape[2]))

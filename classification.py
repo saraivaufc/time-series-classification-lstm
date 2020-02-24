@@ -1,9 +1,7 @@
 import numpy as np
 import tensorflow as tf
 from osgeo import gdal
-from tensorflow.keras.callbacks import ModelCheckpoint
-from tensorflow.keras.callbacks import TensorBoard
-from tensorflow.keras.preprocessing import sequence
+from tensorflow import keras
 
 from model import model_fn
 from utils import load_data, remove_zeros
@@ -28,11 +26,13 @@ class Classification(object):
             self.__model.load_weights(latest)
             print("Model loaded!")
 
-        cp_callback = ModelCheckpoint(filepath=self.__checkpoint_path,
-                                      save_weights_only=True,
-                                      save_best_only=True)
+        cp_callback = keras.callbacks.ModelCheckpoint(
+            filepath=self.__checkpoint_path,
+            save_weights_only=True,
+            save_best_only=True)
 
-        tensorboard_callback = TensorBoard(log_dir=self.__model_dir)
+        tensorboard_callback = keras.callbacks.TensorBoard(
+            log_dir=self.__model_dir)
 
         self.__callbacks = [cp_callback, tensorboard_callback]
 
@@ -43,9 +43,9 @@ class Classification(object):
             train_size=0.9
         )
 
-        X_train = sequence.pad_sequences(X_train,
-                                         maxlen=self.__sequence_size,
-                                         dtype='float32')
+        X_train = keras.preprocessing.sequence.pad_sequences(X_train,
+                                                             maxlen=self.__sequence_size,
+                                                             dtype='float32')
 
         self.__model.fit(X_train, y_train,
                          validation_split=0.10,
@@ -54,9 +54,9 @@ class Classification(object):
                          batch_size=batch_size,
                          callbacks=self.__callbacks)
 
-        X_test = sequence.pad_sequences(X_test,
-                                        maxlen=self.__sequence_size,
-                                        dtype='float32')
+        X_test = keras.preprocessing.sequence.pad_sequences(X_test,
+                                                            maxlen=self.__sequence_size,
+                                                            dtype='float32')
 
         y_test = y_test.reshape((y_test.shape[0]))
 
@@ -85,18 +85,14 @@ class Classification(object):
             serie_values = remove_zeros(serie_values)
             flat_image[index] = serie_values
 
-        flat_image = sequence.pad_sequences(flat_image,
-                                            maxlen=self.__sequence_size,
-                                            dtype='float32')
+        flat_image = keras.preprocessing.sequence.pad_sequences(flat_image,
+                                                                maxlen=self.__sequence_size,
+                                                                dtype='float32')
 
         flat_predicted = self.__model.predict(flat_image,
                                               batch_size=batch_size)
 
-        print(flat_predicted[0])
-
         flat_predicted = np.argmax(flat_predicted, axis=1)
-
-        print(flat_predicted[0])
 
         predicted_image = flat_predicted.reshape((image.shape[1],
                                                   image.shape[2]))

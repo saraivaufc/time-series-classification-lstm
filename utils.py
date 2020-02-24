@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.utils import shuffle
-from tensorflow.keras.preprocessing import sequence
+from tensorflow import keras
 
 
 def load_data(path, n_classes, train_size=0.9):
@@ -26,7 +26,6 @@ def load_data(path, n_classes, train_size=0.9):
                         value = [float(columnData)]
                     except Exception as e:
                         continue
-                        # value = [0]
                     serie_values.append(value)
 
         serie_values = np.array(serie_values)
@@ -45,9 +44,6 @@ def load_data(path, n_classes, train_size=0.9):
     x_test = np.array(x_values[x:])
     y_test = np.array(y_values[y:])
 
-    print(x_train[0])
-    print(x_train.shape)
-
     return (x_train, y_train), (x_test, y_test)
 
 
@@ -63,9 +59,9 @@ def remove_zeros(serie_values):
         serie_values = (serie_values - serie_mean) / serie_std
         # End Normalize
 
-    serie_values = sequence.pad_sequences([serie_values],
-                                          maxlen=raw_shape[0],
-                                          dtype='float32')[0]
+    serie_values = keras.preprocessing.sequence.pad_sequences(
+        [serie_values],
+        maxlen=raw_shape[0], dtype='float32')[0]
 
     if serie_values.shape != raw_shape:
         serie_values = serie_values.reshape(raw_shape)
